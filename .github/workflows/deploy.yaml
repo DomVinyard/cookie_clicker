@@ -2,14 +2,29 @@ name: scp files
 on: [push]
 jobs:
   build:
-    name: Build
+    name: SCP Copy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - name: copy file via ssh password
+      - name: copy file using pemkey
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
           source: "/server.py"
-          key_path: "/.pemkey"
+          
+  control-remote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: AWS SSM Send-Command
+        uses: peterkimzz/aws-ssm-send-command@master
+        id: ssm
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          instance-ids: ${{ secrets.INSTANCE_ID }}
+          working-directory: /home/ubuntu/application
+          command: sudo python3 server.py
